@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // Module System
+    "module": "NodeNext",
+
+    // Emit
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    // Project References
+    "composite": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/a2a/**/*",
+    "src/demo.ts",
+    "src/human.ts"
+  ]
+}
