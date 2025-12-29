@@ -1,65 +1,52 @@
 /**
- * DID Identity Factory
- * Provides a simple interface for creating DID identities
+ * DID Service Factory
+ * Provides convenience functions for creating pre-configured DIDService instances
  */
-import { WebDIDProvider } from './web-provider.js';
-import { EthrDIDProvider } from './ethr-provider.js';
-import type { DIDIdentity } from './types.js';
-
-export interface CreateWebDIDOptions {
-  domain: string;
-  path?: string;
-  controller?: string;
-}
-
-export interface CreateEthrDIDOptions {
-  network: string;
-  rpcUrl?: string;
-}
-
-export type CreateDIDOptions =
-  | ({ method: 'web' } & CreateWebDIDOptions)
-  | ({ method: 'ethr' } & CreateEthrDIDOptions);
+import { DIDService } from './service.js';
 
 /**
- * Create a DID identity
- * @param method - DID method ('web' or 'ethr')
- * @param options - Method-specific options
- * @returns The created DID identity
+ * Supported DID methods for factory creation
  */
-export async function createDIDIdentity(
-  method: 'web',
-  options: CreateWebDIDOptions
-): Promise<DIDIdentity>;
-export async function createDIDIdentity(
-  method: 'ethr',
-  options: CreateEthrDIDOptions
-): Promise<DIDIdentity>;
-export async function createDIDIdentity(
-  method: string,
-  options: any
-): Promise<DIDIdentity> {
-  if (method === 'web') {
-    const provider = new WebDIDProvider();
-    const { path, ...rest } = options as CreateWebDIDOptions;
-    return provider.create({
-      ...rest,
-      path: path ? path.split('/').filter(Boolean) : [],
-    });
-  } else if (method === 'ethr') {
-    const { network, rpcUrl, ...rest } = options as CreateEthrDIDOptions;
+export type DIDMethod = 'web' | 'ethr';
 
-    const resolvedRpcUrl = rpcUrl || (network === 'sepolia' ? process.env.SEPOLIA_RPC_URL : undefined);
-    if (!resolvedRpcUrl) {
-      throw new Error(`rpcUrl is required for network: ${network}`);
+/**
+ * Create a DIDService with specified methods
+ * Uses dynamic imports for tree-shaking - only requested methods are bundled
+ *
+ * @param methods - Array of DID methods to enable (default: ['web'])
+ * @returns Configured DIDService instance
+ *
+ * @example
+ * // did:web only (no ethers dependency)
+ * const service = await createDIDService(['web']);
+ *
+ * @example
+ * // did:web + did:ethr (includes ethers)
+ * const service = await createDIDService(['web', 'ethr']);
+ */
+export async function createDIDService(methods: DIDMethod[] = ['web']): Promise<DIDService> {
+  const service = new DIDService();
+
+  for (const method of methods) {
+    if (method === 'web') {
+      const { DIDWebMethodHandler } = await import('./handlers/web-handler.js');
+      service.registerMethod('web', new DIDWebMethodHandler());
+    } else if (method === 'ethr') {
+      const { DIDEthrMethodHandler } = await import('./handlers/ethr-handler.js');
+      service.registerMethod('ethr', new DIDEthrMethodHandler());
+    } else {
+      // Type guard ensures this never happens with proper typing
+      throw new Error(`Unsupported DID method: ${method}`);
     }
-
-    const provider = new EthrDIDProvider({
-      rpcUrl: resolvedRpcUrl,
-      network,
-    });
-    return provider.create(rest);
   }
 
-  throw new Error(`Unsupported DID method: ${method}`);
+  return service;
+}
+
+/**
+ * Get all supported DID method names
+ * @returns Array of supported method names
+ */
+export function getSupportedDIDMethods(): DIDMethod[] {
+  return ['web', 'ethr'];
 }

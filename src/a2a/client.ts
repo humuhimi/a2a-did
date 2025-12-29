@@ -4,6 +4,7 @@
  * @module a2a/client
  */
 import { verifyJWS, createJWS } from 'did-jwt';
+import * as u8a from 'uint8arrays';
 import { resolveDID } from '../did/resolver.js';
 import type { DIDDocument, DIDIdentity, ServiceEndpoint } from '../did/types.js';
 
@@ -76,17 +77,18 @@ export interface AgentCardVerificationResult {
 /**
  * Base64URL encode a string
  */
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
 function base64UrlEncode(str: string): string {
-  const base64 = Buffer.from(str).toString('base64');
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return u8a.toString(textEncoder.encode(str), 'base64url');
 }
 
 /**
  * Decode base64url to JSON
  */
 function decodeBase64UrlJson(str: string): Record<string, unknown> {
-  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-  const json = Buffer.from(base64, 'base64').toString('utf8');
+  const json = textDecoder.decode(u8a.fromString(str, 'base64url'));
   return JSON.parse(json);
 }
 

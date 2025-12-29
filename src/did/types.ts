@@ -32,10 +32,6 @@ export interface JsonWebKey {
   alg?: string;
 }
 
-/**
- * Supported DID methods
- */
-export type DIDMethod = 'web' | 'ethr';
 
 /**
  * Verification Method in DID Document

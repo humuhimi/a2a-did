@@ -1,23 +1,25 @@
 /**
- * did:web Provider Implementation
- *
- * This provider creates did:web identities and builds DID Documents.
- * Resolution is handled by the web-did-resolver library.
- *
- * @module did/web-provider
+ * Web DID Method Handler
+ * Handles DID operations for did:web
  */
-import { randomBytes } from 'node:crypto';
 import { ES256KSigner } from 'did-jwt';
 import { getPublicKey } from '@noble/secp256k1';
 import * as u8a from 'uint8arrays';
-import type { DIDProvider } from './provider.js';
-import type {
-  DIDCreateOptions,
-  DIDIdentity,
-  DIDDocument,
-  ServiceEndpoint,
-  JsonWebKey,
-} from './types.js';
+import type { DIDMethodHandler } from '../service.js';
+import type { DIDIdentity, ServiceEndpoint, DIDDocument, JsonWebKey } from '../types.js';
+
+/**
+ * Generate cryptographically secure random bytes
+ */
+function randomBytes(size: number): Uint8Array {
+  const cryptoProvider = globalThis.crypto;
+  if (!cryptoProvider?.getRandomValues) {
+    throw new Error('crypto.getRandomValues is required for did:web key generation');
+  }
+  const bytes = new Uint8Array(size);
+  cryptoProvider.getRandomValues(bytes);
+  return bytes;
+}
 
 /**
  * Convert public key to JWK format
@@ -52,33 +54,32 @@ function publicKeyToJwk(publicKey: Uint8Array): JsonWebKey {
 }
 
 /**
- * did:web Provider
- *
- * Creates did:web identities and builds DID Documents.
- *
- * DID format: did:web:domain or did:web:domain:path:segments
- *
- * @example
- * const provider = new WebDIDProvider();
- * const identity = await provider.create({
- *   domain: 'example.com',
- *   path: ['users', 'alice'],
- * });
- * // identity.did = 'did:web:example.com:users:alice'
+ * Web DID Method Handler
+ * Implements DID operations for did:web method
+ * did:web resolves DIDs through HTTPS to .well-known/did.json
+ * @implements {DIDMethodHandler}
  */
-export class WebDIDProvider implements DIDProvider {
-  readonly method = 'web' as const;
-
+export class DIDWebMethodHandler implements DIDMethodHandler {
   /**
    * Create a new did:web identity
-   * @param options - Creation options including domain and path
-   * @returns The created DID identity with keys and document
-   * @throws Error if domain is not provided
+   * @param options - Configuration options
+   * @param options.agentId - Agent unique identifier
+   * @param options.config - Web DID configuration (domain, port)
+   * @param options.services - Optional service endpoints to include in DID Document
+   * @returns Promise resolving to DID identity with document
+   * @throws {Error} When config type is not 'web' or domain is missing
    */
-  async create(options: DIDCreateOptions): Promise<DIDIdentity> {
-    const { domain, path = [], controller, services = [] } = options;
+  async createIdentity(options: {
+    agentId: string;
+    config: any;
+    services?: ServiceEndpoint[];
+  }): Promise<DIDIdentity> {
+    const config = options.config;
+    if (config.type !== 'web') {
+      throw new Error('Invalid config for did:web');
+    }
 
-    if (!domain) {
+    if (!config.domain) {
       throw new Error('Domain is required for did:web');
     }
 
@@ -88,10 +89,9 @@ export class WebDIDProvider implements DIDProvider {
 
     // Build DID string
     // Encode special characters (: → %3A for port numbers)
-    const encodedDomain = domain.replace(/:/g, '%3A');
-    const did = path.length > 0
-      ? `did:web:${encodedDomain}:${path.join(':')}`
-      : `did:web:${encodedDomain}`;
+    const encodedDomain = `${config.domain}:${config.port}`.replace(/:/g, '%3A');
+    const path = `agents/${options.agentId}`;
+    const did = `did:web:${encodedDomain}:${path.split('/').join(':')}`;
 
     const keyId = `${did}#key-1`;
     const signer = ES256KSigner(privateKey);
@@ -101,8 +101,8 @@ export class WebDIDProvider implements DIDProvider {
       did,
       keyId,
       publicKey,
-      controller,
-      services
+      config.controller,
+      options.services
     );
 
     return {
@@ -115,12 +115,55 @@ export class WebDIDProvider implements DIDProvider {
   }
 
   /**
+   * Register a service endpoint for did:web
+   * No-op for did:web as service endpoints are declared in the DID Document
+   * served at .well-known/did.json (handled during DID creation)
+   * @param _options - Registration options (unused)
+   * @returns Promise resolving to empty array (no transaction hashes)
+   */
+  async registerServiceEndpoint(_options: {
+    did: string;
+    privateKey: string;
+    serviceEndpoint: string;
+    config: any;
+  }): Promise<string[]> {
+    // did:web does not require on-chain service registration
+    // Services are declared in the DID Document served at .well-known/did.json
+    // This is already handled during DID creation
+    return [];
+  }
+
+  /**
+   * Extract wallet address from did:web
+   * @param _did - DID string (unused for did:web)
+   * @returns undefined (did:web has no wallet address concept)
+   */
+  extractWalletAddress(_did: string): string | undefined {
+    // did:web does not have a wallet address
+    return undefined;
+  }
+
+  /**
+   * Get key ID for did:web
+   * @param did - DID string
+   * @returns Default key identifier with #key-1 fragment
+   * @example
+   * getKeyId("did:web:example.com") // returns "did:web:example.com#key-1"
+   */
+  getKeyId(did: string): string {
+    return `${did}#key-1`;
+  }
+
+  /**
    * Build DID Document for an existing identity
    * @param identity - The DID identity to build document for
    * @param options - Optional creation options (controller, services)
    * @returns The DID Document
    */
-  buildDocument(identity: DIDIdentity, options?: DIDCreateOptions): DIDDocument {
+  buildDocumentForIdentity(
+    identity: DIDIdentity,
+    options?: { controller?: string; services?: ServiceEndpoint[] }
+  ): DIDDocument {
     const publicKey = getPublicKey(identity.privateKey, false);
     return this.buildDocumentInternal(
       identity.did,
@@ -132,7 +175,7 @@ export class WebDIDProvider implements DIDProvider {
   }
 
   /**
-   * Internal method to build DID Document
+   * Internal: Build DID Document
    * @param did - The DID string
    * @param keyId - The key ID
    * @param publicKey - The public key bytes

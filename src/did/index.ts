@@ -2,8 +2,18 @@
  * DID Module
  * @module did
  */
+
+// Core types and interfaces
 export * from './types.js';
-export * from './provider.js';
-export * from './web-provider.js';
-export * from './resolver.js';
+
+// DID Service (requires explicit handler registration)
 export * from './service.js';
+
+// Factory helper (lazy loading with tree-shaking)
+export * from './factory.js';
+
+// Resolver
+export * from './resolver.js';
+
+// Signing utilities
+export * from './signing.js';
