@@ -14,16 +14,14 @@ import { EthrDID } from 'ethr-did';
 import { JsonRpcProvider, Wallet } from 'ethers';
 import type { DIDProvider } from './provider.js';
 import type { DIDCreateOptions, DIDIdentity, ServiceEndpoint } from './types.js';
-
-// Sepolia testnet configuration
-const SEPOLIA_CHAIN_ID = 11155111;
-const SEPOLIA_REGISTRY = '0x03d5003bf0e79c5f5223588f347eba39afbc3818';
+import { KNOWN_NETWORKS, type KnownNetwork } from './resolvers/ethr.js';
 
 // Default validity period: 1 year in seconds
 const DEFAULT_VALIDITY = 31536000;
 
 export interface EthrDIDConfig {
   rpcUrl: string;
+  network: string;
   chainId?: number;
   registry?: string;
 }
@@ -53,12 +51,18 @@ export class EthrDIDProvider implements DIDProvider {
   private readonly rpcUrl: string;
   private readonly chainId: number;
   private readonly registry: string;
+  private readonly network: string;
   private readonly jsonRpcProvider: JsonRpcProvider;
 
   constructor(config: EthrDIDConfig) {
+    const known = KNOWN_NETWORKS[config.network as KnownNetwork];
     this.rpcUrl = config.rpcUrl;
-    this.chainId = config.chainId ?? SEPOLIA_CHAIN_ID;
-    this.registry = config.registry ?? SEPOLIA_REGISTRY;
+    this.network = config.network;
+    this.chainId = config.chainId ?? known?.chainId;
+    this.registry = config.registry ?? known?.registry;
+    if (!this.chainId || !this.registry) {
+      throw new Error(`Unknown network "${config.network}". Provide chainId and registry.`);
+    }
     this.jsonRpcProvider = new JsonRpcProvider(this.rpcUrl);
   }
 
@@ -91,8 +95,7 @@ export class EthrDIDProvider implements DIDProvider {
     });
 
     // DID format: did:ethr:sepolia:0x...
-    const networkName = this.getNetworkName();
-    const did = `did:ethr:${networkName}:${wallet.address}`;
+    const did = `did:ethr:${this.getNetworkName()}:${wallet.address}`;
     const keyId = `${did}#controller`;
 
     // Register service endpoints on-chain
@@ -162,6 +165,9 @@ export class EthrDIDProvider implements DIDProvider {
    * Get network name for DID format
    */
   private getNetworkName(): string {
+    if (this.network) {
+      return this.network;
+    }
     switch (this.chainId) {
       case 1:
         return 'mainnet';

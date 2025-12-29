@@ -10,24 +10,18 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@a2a-js/sdk": "^0.3.7",
     "@noble/secp256k1": "^3.0.0",
     "did-jwt": "^8.0.18",
     "did-resolver": "^4.1.0",
-    "dotenv": "^17.2.3",
     "ethers": "^6.16.0",
     "ethr-did": "^3.0.38",
     "ethr-did-resolver": "^11.0.5",
-    "express": "^5.2.1",
     "multiformats": "^13.4.2",
     "uint8arrays": "^5.1.0",
-    "uuid": "^13.0.0",
     "web-did-resolver": "^2.0.32"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^25.0.3",
-    "@types/uuid": "^10.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

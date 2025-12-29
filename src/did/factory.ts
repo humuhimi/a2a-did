@@ -49,18 +49,14 @@ export async function createDIDIdentity(
   } else if (method === 'ethr') {
     const { network, rpcUrl, ...rest } = options as CreateEthrDIDOptions;
 
-    if (!rpcUrl) {
-      if (!process.env.SEPOLIA_RPC_URL) {
-        throw new Error('SEPOLIA_RPC_URL environment variable is required when rpcUrl is not provided');
-      }
-      const provider = new EthrDIDProvider({
-        rpcUrl: process.env.SEPOLIA_RPC_URL,
-      });
-      return provider.create(rest);
+    const resolvedRpcUrl = rpcUrl || (network === 'sepolia' ? process.env.SEPOLIA_RPC_URL : undefined);
+    if (!resolvedRpcUrl) {
+      throw new Error(`rpcUrl is required for network: ${network}`);
     }
 
     const provider = new EthrDIDProvider({
-      rpcUrl,
+      rpcUrl: resolvedRpcUrl,
+      network,
     });
     return provider.create(rest);
   }

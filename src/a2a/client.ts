@@ -3,9 +3,9 @@
  * Enables cross-server Agent-to-Agent communication
  * @module a2a/client
  */
-import { verifyJWS, createJWS, decodeJWT } from 'did-jwt';
-import { resolveDID, getResolver } from '../did/resolver.js';
-import type { DIDDocument, DIDIdentity, ServiceEndpoint, VerificationMethod } from '../did/types.js';
+import { verifyJWS, createJWS } from 'did-jwt';
+import { resolveDID } from '../did/resolver.js';
+import type { DIDDocument, DIDIdentity, ServiceEndpoint } from '../did/types.js';
 
 /**
  * A2A Message Part
@@ -90,6 +90,26 @@ function decodeBase64UrlJson(str: string): Record<string, unknown> {
   return JSON.parse(json);
 }
 
+function normalizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeJson);
+  }
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return Object.keys(record)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = normalizeJson(record[key]);
+        return acc;
+      }, {});
+  }
+  return value;
+}
+
+function jsonEquals(a: unknown, b: unknown): boolean {
+  return JSON.stringify(normalizeJson(a)) === JSON.stringify(normalizeJson(b));
+}
+
 /**
  * Verify AgentCard signature
  * @param agentCardUrl - URL to fetch AgentCard from
@@ -109,7 +129,7 @@ export async function verifyAgentCard(agentCardUrl: string): Promise<AgentCardVe
       return { verified: false, error: 'AgentCard has no signatures' };
     }
 
-    const sig = signedCard.signatures[0];
+    const sig = signedCard.signatures[0]!;
 
     // 3. Extract signer DID from protected header (kid field)
     const header = decodeBase64UrlJson(sig.protected) as { kid?: string; alg?: string };
@@ -119,7 +139,7 @@ export async function verifyAgentCard(agentCardUrl: string): Promise<AgentCardVe
 
     // Extract DID from kid (format: did:...:...#key-1)
     const kid = header.kid;
-    const signerDid = kid.split('#')[0];
+    const signerDid = kid.split('#')[0]!;
 
     // 4. Resolve signer's DID to get public key
     const didDocument = await resolveDID(signerDid);
@@ -128,7 +148,7 @@ export async function verifyAgentCard(agentCardUrl: string): Promise<AgentCardVe
     }
 
     // 5. Find verification method matching the kid
-    const keyFragment = kid.split('#')[1];
+    const keyFragment = kid.split('#')[1]!;
     const verificationMethod = didDocument.verificationMethod?.find(
       vm => vm.id === kid || vm.id === `${signerDid}#${keyFragment}`
     );
@@ -302,12 +322,12 @@ export async function verifyA2ARequest(request: SignedA2ARequest): Promise<A2ARe
       return { authenticated: false, error: 'Invalid JWS format' };
     }
 
-    const header = decodeBase64UrlJson(parts[0]) as { kid?: string; alg?: string };
+    const header = decodeBase64UrlJson(parts[0]!) as { kid?: string; alg?: string };
     if (!header.kid) {
       return { authenticated: false, error: 'No kid in signature header' };
     }
 
-    const senderDid = header.kid.split('#')[0];
+    const senderDid = header.kid.split('#')[0]!;
 
     // Resolve sender's DID to get public key
     const didDocument = await resolveDID(senderDid);
@@ -316,7 +336,7 @@ export async function verifyA2ARequest(request: SignedA2ARequest): Promise<A2ARe
     }
 
     // Find verification method
-    const keyFragment = header.kid.split('#')[1];
+    const keyFragment = header.kid.split('#')[1]!;
     const verificationMethod = didDocument.verificationMethod?.find(
       vm => vm.id === header.kid || vm.id === `${senderDid}#${keyFragment}`
     );
@@ -324,14 +344,14 @@ export async function verifyA2ARequest(request: SignedA2ARequest): Promise<A2ARe
       return { authenticated: false, error: `No matching verification method for kid: ${header.kid}` };
     }
 
-    // Reconstruct compact JWS to verify payload integrity
-    // Remove signature from request to get original payload
+    const payload = decodeBase64UrlJson(parts[1]!);
     const { signature: _sig, ...requestWithoutSig } = request;
-    const payloadBase64 = base64UrlEncode(JSON.stringify(requestWithoutSig));
-    const compactJws = `${parts[0]}.${payloadBase64}.${parts[2]}`;
+    if (!jsonEquals(payload, requestWithoutSig)) {
+      return { authenticated: false, error: 'JWS payload does not match request body' };
+    }
 
-    // Verify signature with reconstructed JWS (ensures payload matches received request)
-    verifyJWS(compactJws, verificationMethod as Parameters<typeof verifyJWS>[1]);
+    // Verify signature with the original JWS payload
+    verifyJWS(request.signature, verificationMethod as Parameters<typeof verifyJWS>[1]);
 
     return { authenticated: true, senderDid };
   } catch (error) {
