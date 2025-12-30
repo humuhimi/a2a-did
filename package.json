@@ -1,5 +1,5 @@
 {
-  "name": "@universal-agent/core",
+  "name": "a2a-did",
   "version": "0.1.0",
   "description": "Core DID and Agent functionality",
   "type": "module",
