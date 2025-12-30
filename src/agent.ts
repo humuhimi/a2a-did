@@ -7,7 +7,7 @@ import { createJWT, createJWS, verifyJWT } from 'did-jwt';
 import type { DIDIdentity, ServiceEndpoint } from './did/types.js';
 import { getResolver } from './did/resolver.js';
 import type { SignedPayload, VerificationResult } from './types.js';
-import { A2A_AGENT_CARD_SERVICE_TYPE } from './a2a/client.js';
+import { A2A_AGENT_CARD_SERVICE_TYPE } from './a2a/constants.js';
 
 /**
  * Agent configuration

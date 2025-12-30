@@ -8,7 +8,7 @@ import * as u8a from 'uint8arrays';
 import type { DIDMethodHandler } from '../service.js';
 import type { DIDIdentity, ServiceEndpoint } from '../types.js';
 import { KNOWN_NETWORKS, type KnownNetwork } from '../resolvers/ethr.js';
-import { A2A_AGENT_CARD_SERVICE_TYPE } from '../../a2a/client.js';
+import { A2A_AGENT_CARD_SERVICE_TYPE } from '../../a2a/constants.js';
 
 // Default validity period: 1 year in seconds
 const DEFAULT_VALIDITY = 31536000;
