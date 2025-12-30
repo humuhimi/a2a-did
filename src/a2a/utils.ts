@@ -3,6 +3,7 @@
  * @module a2a/utils
  */
 import * as u8a from 'uint8arrays';
+import { verifiedFetch } from '@helia/verified-fetch';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -49,18 +50,22 @@ export function jsonEquals(a: unknown, b: unknown): boolean {
 }
 
 /**
- * Fetch content from URI (supports http://, https://, ipfs://)
- * @param uri - URI to fetch (http://, https://, or ipfs://)
- * @param ipfsGateway - IPFS gateway URL with trailing slash (default: https://ipfs.io/ipfs/)
+ * Fetch content from URI with cryptographic verification for IPFS content
+ *
+ * - For ipfs:// and ipns:// URIs: Uses @helia/verified-fetch for trustless content retrieval
+ *   with CID verification, multiple gateway fallbacks, and tamper detection
+ * - For http:// and https:// URIs: Uses standard fetch (assumes TLS provides sufficient security)
+ *
+ * @param uri - URI to fetch (http://, https://, ipfs://, or ipns://)
  * @returns Fetch response
- * @throws Error if URI scheme is unsupported
+ * @throws Error if URI scheme is unsupported or verification fails
  */
-export async function fetchUri(uri: string, ipfsGateway: string = 'https://ipfs.io/ipfs/'): Promise<Response> {
-  if (uri.startsWith('ipfs://')) {
-    const cid = uri.replace('ipfs://', '');
-    const gatewayUrl = `${ipfsGateway}${cid}`;
-    return fetch(gatewayUrl);
+export async function fetchUri(uri: string): Promise<Response> {
+  if (uri.startsWith('ipfs://') || uri.startsWith('ipns://')) {
+    // Use verified fetch for IPFS/IPNS content (cryptographic verification + multiple gateways)
+    return verifiedFetch(uri);
   } else if (uri.startsWith('http://') || uri.startsWith('https://')) {
+    // Use standard fetch for HTTP/HTTPS (TLS provides transport security)
     return fetch(uri);
   } else {
     throw new Error(`Unsupported URI scheme: ${uri}`);

@@ -44,16 +44,14 @@ export interface MessageSignatureVerificationResult {
 /**
  * Verify AgentCard signature
  * @param agentCardUrl - URL to fetch AgentCard from (supports http://, https://, ipfs://)
- * @param ipfsGateway - IPFS gateway URL with trailing slash for ipfs:// URIs (e.g., https://gateway.pinata.cloud/ipfs/)
  * @returns Verification result with signer DID if successful
  */
 export async function verifyAgentCard(
-  agentCardUrl: string,
-  ipfsGateway?: string
+  agentCardUrl: string
 ): Promise<AgentCardVerificationResult> {
   try {
-    // 1. Fetch AgentCard (supports http://, https://, ipfs://)
-    const response = await fetchUri(agentCardUrl, ipfsGateway);
+    // 1. Fetch AgentCard with cryptographic verification (supports http://, https://, ipfs://)
+    const response = await fetchUri(agentCardUrl);
     if (!response.ok) {
       return { verified: false, error: `Failed to fetch AgentCard: ${response.status}` };
     }
@@ -114,12 +112,10 @@ export async function verifyAgentCard(
  * Follows A2A Protocol 0.3.0: Verifies Agent Card signature first, then message signature
  *
  * @param jws - The JWS signature string (compact format)
- * @param ipfsGateway - IPFS gateway URL with trailing slash (optional)
  * @returns Verification result with sender DID if successful
  */
 export async function verifyA2AMessageSignature(
-  jws: string,
-  ipfsGateway?: string
+  jws: string
 ): Promise<MessageSignatureVerificationResult> {
   try {
     // 1. Decode the JWS to get the protected header
@@ -147,7 +143,7 @@ export async function verifyA2AMessageSignature(
       return { valid: false, error: 'No Agent Card URL in DID Document' };
     }
 
-    const cardVerification = await verifyAgentCard(agentCardUrl, ipfsGateway);
+    const cardVerification = await verifyAgentCard(agentCardUrl);
     if (!cardVerification.verified) {
       return {
         valid: false,
@@ -189,12 +185,10 @@ export async function verifyA2AMessageSignature(
  * This is a convenience function for API servers to validate incoming signed requests
  *
  * @param request - The signed A2A request (JSON-RPC with signature field)
- * @param ipfsGateway - IPFS gateway URL with trailing slash (optional)
  * @returns Verification result with sender DID if successful
  */
 export async function verifySignedA2ARequest(
-  request: { signature?: string; [key: string]: unknown },
-  ipfsGateway?: string
+  request: { signature?: string; [key: string]: unknown }
 ): Promise<MessageSignatureVerificationResult> {
   if (!request.signature) {
     return { valid: false, error: 'No signature in request' };
@@ -202,7 +196,7 @@ export async function verifySignedA2ARequest(
 
   try {
     // 1. Verify the JWS signature
-    const signatureResult = await verifyA2AMessageSignature(request.signature, ipfsGateway);
+    const signatureResult = await verifyA2AMessageSignature(request.signature);
     if (!signatureResult.valid) {
       return signatureResult;
     }

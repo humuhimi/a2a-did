@@ -46,14 +46,10 @@ export function extractAgentCardUrl(document: DIDDocument): string | undefined {
  * See packages/core/src/did/resolver.ts for configuration details.
  *
  * @param did - The DID to resolve
- * @param ipfsGateway - IPFS gateway URL with trailing slash for ipfs:// URIs (e.g., https://gateway.pinata.cloud/ipfs/)
  * @returns The A2A endpoint URL from Agent Card
  * @throws Error if DID cannot be resolved, has no Agent Card, or Agent Card has no url
  */
-export async function resolveA2AEndpoint(
-  did: string,
-  ipfsGateway?: string
-): Promise<string> {
+export async function resolveA2AEndpoint(did: string): Promise<string> {
   // Step 1: Resolve DID to get Agent Card URL
   const document = await resolveDID(did);
   if (!document) {
@@ -65,8 +61,8 @@ export async function resolveA2AEndpoint(
     throw new Error(`No Agent Card URL found in DID Document: ${did}`);
   }
 
-  // Step 2: Fetch Agent Card (supports http://, https://, ipfs://)
-  const response = await fetchUri(agentCardUrl, ipfsGateway);
+  // Step 2: Fetch Agent Card with cryptographic verification (supports http://, https://, ipfs://)
+  const response = await fetchUri(agentCardUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch Agent Card from ${agentCardUrl}: ${response.status}`);
   }
