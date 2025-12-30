@@ -9,6 +9,12 @@ import { resolveDID } from '../did/resolver.js';
 import type { DIDDocument, DIDIdentity, ServiceEndpoint } from '../did/types.js';
 
 /**
+ * Service type for Agent Card URL in DID Document
+ * Use this constant to ensure consistency across the codebase
+ */
+export const A2A_AGENT_CARD_SERVICE_TYPE = 'A2AAgentCard' as const;
+
+/**
  * A2A Message Part
  */
 export interface MessagePart {
@@ -114,13 +120,17 @@ function jsonEquals(a: unknown, b: unknown): boolean {
 
 /**
  * Verify AgentCard signature
- * @param agentCardUrl - URL to fetch AgentCard from
+ * @param agentCardUrl - URL to fetch AgentCard from (supports http://, https://, ipfs://)
+ * @param ipfsGateway - IPFS gateway URL with trailing slash for ipfs:// URIs (e.g., https://gateway.pinata.cloud/ipfs/)
  * @returns Verification result with signer DID if successful
  */
-export async function verifyAgentCard(agentCardUrl: string): Promise<AgentCardVerificationResult> {
+export async function verifyAgentCard(
+  agentCardUrl: string,
+  ipfsGateway?: string
+): Promise<AgentCardVerificationResult> {
   try {
-    // 1. Fetch AgentCard
-    const response = await fetch(agentCardUrl);
+    // 1. Fetch AgentCard (supports http://, https://, ipfs://)
+    const response = await fetchUri(agentCardUrl, ipfsGateway);
     if (!response.ok) {
       return { verified: false, error: `Failed to fetch AgentCard: ${response.status}` };
     }
@@ -177,13 +187,13 @@ export async function verifyAgentCard(agentCardUrl: string): Promise<AgentCardVe
 }
 
 /**
- * Extract A2A service endpoint from DID Document
+ * Extract Agent Card URL from DID Document
  * @param document - The DID Document
- * @returns The A2A endpoint URL, or undefined if not found
+ * @returns The Agent Card URL, or undefined if not found
  */
-function extractA2AEndpoint(document: DIDDocument): string | undefined {
+function extractAgentCardUrl(document: DIDDocument): string | undefined {
   const service = document.service?.find(
-    (s: ServiceEndpoint) => s.type === 'A2AAgent'
+    (s: ServiceEndpoint) => s.type === A2A_AGENT_CARD_SERVICE_TYPE
   );
   if (!service) return undefined;
   return typeof service.serviceEndpoint === 'string'
@@ -192,38 +202,84 @@ function extractA2AEndpoint(document: DIDDocument): string | undefined {
 }
 
 /**
- * Resolve a DID and get its A2A endpoint
- * @param did - The DID to resolve
- * @returns The A2A endpoint URL
- * @throws Error if DID cannot be resolved or has no A2A endpoint
+ * Fetch content from URI (supports http://, https://, ipfs://)
+ * @param uri - URI to fetch (http://, https://, or ipfs://)
+ * @param ipfsGateway - IPFS gateway URL with trailing slash (default: https://ipfs.io/ipfs/)
+ * @returns Fetch response
+ * @throws Error if URI scheme is unsupported
  */
-export async function resolveA2AEndpoint(did: string): Promise<string> {
+async function fetchUri(uri: string, ipfsGateway: string = 'https://ipfs.io/ipfs/'): Promise<Response> {
+  if (uri.startsWith('ipfs://')) {
+    // IPFS URI: use gateway for now (future: native ipfs.fetch() when available)
+    const cid = uri.replace('ipfs://', '');
+    const gatewayUrl = `${ipfsGateway}${cid}`;
+    return fetch(gatewayUrl);
+  } else if (uri.startsWith('http://') || uri.startsWith('https://')) {
+    // HTTP(S) URI: use standard fetch
+    return fetch(uri);
+  } else {
+    throw new Error(`Unsupported URI scheme: ${uri}`);
+  }
+}
+
+/**
+ * Resolve a DID and get its A2A endpoint
+ * Follows A2A Protocol 0.3.0: DID → Agent Card URL → Agent Card → A2A endpoint
+ *
+ * IMPORTANT: For did:ethr, you must call configureResolver() before using this function.
+ * See packages/core/src/did/resolver.ts for configuration details.
+ *
+ * @param did - The DID to resolve
+ * @param ipfsGateway - IPFS gateway URL with trailing slash for ipfs:// URIs (e.g., https://gateway.pinata.cloud/ipfs/)
+ * @returns The A2A endpoint URL from Agent Card
+ * @throws Error if DID cannot be resolved, has no Agent Card, or Agent Card has no url
+ */
+export async function resolveA2AEndpoint(
+  did: string,
+  ipfsGateway?: string
+): Promise<string> {
+  // Step 1: Resolve DID to get Agent Card URL
   const document = await resolveDID(did);
   if (!document) {
     throw new Error(`Failed to resolve DID: ${did}`);
   }
 
-  const endpoint = extractA2AEndpoint(document);
-  if (!endpoint) {
-    throw new Error(`No A2A endpoint found in DID Document: ${did}`);
+  const agentCardUrl = extractAgentCardUrl(document);
+  if (!agentCardUrl) {
+    throw new Error(`No Agent Card URL found in DID Document: ${did}`);
   }
 
-  return endpoint;
+  // Step 2: Fetch Agent Card (supports http://, https://, ipfs://)
+  const response = await fetchUri(agentCardUrl, ipfsGateway);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Agent Card from ${agentCardUrl}: ${response.status}`);
+  }
+
+  const agentCard = (await response.json()) as SignedAgentCard;
+
+  // Step 3: Extract A2A endpoint from Agent Card
+  if (!agentCard.url || typeof agentCard.url !== 'string') {
+    throw new Error(`Agent Card has no valid url field: ${agentCardUrl}`);
+  }
+
+  return agentCard.url;
 }
 
 /**
  * Send an A2A message to an agent identified by DID
  * @param did - The target agent's DID
  * @param message - The message to send
+ * @param ipfsGateway - IPFS gateway URL with trailing slash (e.g., https://gateway.pinata.cloud/ipfs/)
  * @returns The A2A response
  * @throws Error if DID resolution fails or no A2A endpoint found
  */
 export async function sendMessage(
   did: string,
-  message: A2AMessage
+  message: A2AMessage,
+  ipfsGateway?: string
 ): Promise<A2AResponse> {
   // 1. Resolve DID to get endpoint
-  const endpoint = await resolveA2AEndpoint(did);
+  const endpoint = await resolveA2AEndpoint(did, ipfsGateway);
 
   // 2. Build JSON-RPC request
   const request: A2ARequest = {
@@ -369,15 +425,17 @@ export async function verifyA2ARequest(request: SignedA2ARequest): Promise<A2ARe
  * @param did - The target agent's DID
  * @param message - The message to send
  * @param signer - The sender's DID identity for signing
+ * @param ipfsGateway - IPFS gateway URL with trailing slash (e.g., https://gateway.pinata.cloud/ipfs/)
  * @returns The A2A response
  */
 export async function sendAuthenticatedMessage(
   did: string,
   message: A2AMessage,
-  signer: DIDIdentity
+  signer: DIDIdentity,
+  ipfsGateway?: string
 ): Promise<A2AResponse> {
   // 1. Resolve DID to get endpoint
-  const endpoint = await resolveA2AEndpoint(did);
+  const endpoint = await resolveA2AEndpoint(did, ipfsGateway);
 
   // 2. Build and sign JSON-RPC request
   const request = await signA2ARequest(

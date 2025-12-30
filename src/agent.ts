@@ -7,6 +7,7 @@ import { createJWT, createJWS, verifyJWT } from 'did-jwt';
 import type { DIDIdentity, ServiceEndpoint } from './did/types.js';
 import { getResolver } from './did/resolver.js';
 import type { SignedPayload, VerificationResult } from './types.js';
+import { A2A_AGENT_CARD_SERVICE_TYPE } from './a2a/client.js';
 
 /**
  * Agent configuration
@@ -114,12 +115,12 @@ export class Agent {
   }
 
   /**
-   * Get A2A service endpoint URL from local DID Document
-   * For did:ethr, use resolveDID() instead to get on-chain endpoint
-   * @returns The A2A endpoint URL if configured, undefined otherwise
+   * Get A2A Agent Card URL from local DID Document
+   * For did:ethr, use resolveDID() instead to get on-chain Agent Card URL
+   * @returns The Agent Card URL if configured, undefined otherwise
    */
   getA2AEndpoint(): string | undefined {
-    const service = this.getService('A2AAgent');
+    const service = this.getService(A2A_AGENT_CARD_SERVICE_TYPE);
     if (!service) return undefined;
     return typeof service.serviceEndpoint === 'string'
       ? service.serviceEndpoint

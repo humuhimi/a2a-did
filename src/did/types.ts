@@ -56,9 +56,9 @@ export interface VerificationMethod {
  * @see https://www.w3.org/TR/did-core/#services
  */
 export interface ServiceEndpoint {
-  /** Service ID (e.g., "did:web:example.com#a2a") */
+  /** Service ID (e.g., "did:web:example.com#agent-card") */
   id: string;
-  /** Service type (e.g., "A2AAgent") */
+  /** Service type (e.g., "A2AAgentCard") */
   type: string;
   /** Service endpoint URL or configuration */
   serviceEndpoint: string | string[] | Record<string, unknown>;

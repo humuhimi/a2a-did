@@ -69,10 +69,14 @@ export function createResolver(config: ResolverConfig = {}): Resolver {
 /**
  * Configure the default resolver
  * Call this at application startup to set up DID resolution
+ *
+ * IMPORTANT: If you use did:ethr, you MUST call this function before resolving did:ethr DIDs.
+ * Otherwise, did:ethr resolution will fail.
+ *
  * @param config - Resolver configuration
  *
  * @example
- * // In your app initialization
+ * // In your app initialization (required for did:ethr)
  * configureResolver({
  *   web: true,
  *   ethr: {
