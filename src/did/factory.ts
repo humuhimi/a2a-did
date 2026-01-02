@@ -1,8 +1,8 @@
 /**
- * DID Service Factory
- * Provides convenience functions for creating pre-configured DIDService instances
+ * Agent DID Service Factory
+ * Provides convenience functions for creating pre-configured AgentDIDService instances
  */
-import { DIDService } from './service.js';
+import { AgentDIDService } from './service.js';
 
 /**
  * Supported DID methods for factory creation
@@ -10,22 +10,22 @@ import { DIDService } from './service.js';
 export type DIDMethod = 'web' | 'ethr';
 
 /**
- * Create a DIDService with specified methods
+ * Create an AgentDIDService with specified methods
  * Uses dynamic imports for tree-shaking - only requested methods are bundled
  *
  * @param methods - Array of DID methods to enable (default: ['web'])
- * @returns Configured DIDService instance
+ * @returns Configured AgentDIDService instance
  *
  * @example
  * // did:web only (no ethers dependency)
- * const service = await createDIDService(['web']);
+ * const service = await createAgentDIDService(['web']);
  *
  * @example
  * // did:web + did:ethr (includes ethers)
- * const service = await createDIDService(['web', 'ethr']);
+ * const service = await createAgentDIDService(['web', 'ethr']);
  */
-export async function createDIDService(methods: DIDMethod[] = ['web']): Promise<DIDService> {
-  const service = new DIDService();
+export async function createAgentDIDService(methods: DIDMethod[] = ['web']): Promise<AgentDIDService> {
+  const service = new AgentDIDService();
 
   for (const method of methods) {
     if (method === 'web') {

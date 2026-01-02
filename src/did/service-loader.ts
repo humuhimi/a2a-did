@@ -1,19 +1,19 @@
 /**
- * DID Service Loader
+ * Agent DID Service Loader
  * Dynamically loads and registers DID method handlers
  * @module did/service-loader
  */
-import type { DIDService } from './service.js';
+import type { AgentDIDService } from './service.js';
 
 /**
- * Register DID method handlers to a DIDService instance
+ * Register DID method handlers to an AgentDIDService instance
  * Uses dynamic imports for lazy loading
  *
- * @param service - The DIDService instance
+ * @param service - The AgentDIDService instance
  * @param methods - Array of DID methods to register ('web', 'ethr')
  */
 export async function registerDIDHandlers(
-  service: DIDService,
+  service: AgentDIDService,
   methods: Array<'web' | 'ethr'>
 ): Promise<void> {
   for (const method of methods) {

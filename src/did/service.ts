@@ -1,6 +1,6 @@
 /**
- * DID Service
- * Orchestrates DID operations through pluggable method handlers
+ * Agent DID Service
+ * Orchestrates DID operations for AI Agents through pluggable method handlers
  */
 import type { DIDIdentity, ServiceEndpoint } from './types.js';
 
@@ -45,11 +45,11 @@ export interface DIDMethodHandler {
 }
 
 /**
- * DID Service
- * Provides a unified interface for DID operations across different methods
+ * Agent DID Service
+ * Provides a unified interface for DID operations across different methods for AI Agents
  * Handlers must be explicitly registered using registerMethod()
  */
-export class DIDService {
+export class AgentDIDService {
   private methods: Map<string, DIDMethodHandler>;
 
   constructor() {
