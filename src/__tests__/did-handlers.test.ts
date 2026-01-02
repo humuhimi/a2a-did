@@ -61,6 +61,43 @@ describe('DID Handlers: did:web', () => {
   });
 });
 
+describe('DID Handlers: did:ethr', () => {
+  it('should create did:ethr identity', async () => {
+    const service = await createAgentDIDService(['ethr']);
+
+    const identity = await service.createIdentity({
+      method: 'ethr',
+      agentId: 'test-agent-ethr',
+      config: {
+        type: 'ethr',
+        network: 'sepolia',
+        rpcUrl: 'https://eth-sepolia.public.blastapi.io',
+      },
+    });
+
+    expect(identity).toBeDefined();
+    expect(identity.did).toMatch(/^did:ethr:sepolia:0x/);
+    expect(identity.privateKey).toBeInstanceOf(Uint8Array);
+    expect(identity.privateKey.length).toBe(32);
+  });
+
+  it('should fail without rpcUrl', async () => {
+    const service = await createAgentDIDService(['ethr']);
+
+    await expect(
+      service.createIdentity({
+        method: 'ethr',
+        agentId: 'test-agent',
+        config: {
+          type: 'ethr',
+          network: 'sepolia',
+          // Missing rpcUrl
+        } as any,
+      })
+    ).rejects.toThrow(/rpcUrl is required/);
+  });
+});
+
 describe('DID Handlers: Factory', () => {
   it('should throw error for unsupported DID method', async () => {
     const service = await createAgentDIDService(['web']);

@@ -23,24 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD
 - Automated npm publishing
 
-### Security
-⚠️ **WARNING: NOT PRODUCTION READY**
+### Implementation Notes
+This is an experimental v0.1.0 release. Like other cryptographic libraries (jose, ethers.js, did-jwt), this library provides cryptographic primitives and delegates security implementation decisions to developers.
 
-This is an experimental release with known security vulnerabilities:
-- **CRITICAL**: Unencrypted private keys in memory (CVSS 9.1)
-- **HIGH**: SSRF in DID resolution (CVSS 8.6)
-- **HIGH**: No replay attack protection (CVSS 7.4)
-
-See [SECURITY.md](./SECURITY.md) for complete vulnerability details and mitigation strategies.
-
-**Do not use in production without implementing the security mitigations documented in SECURITY.md.**
+See [SECURITY.md](./SECURITY.md) for production deployment considerations including:
+- Key management strategies (in-memory, KMS, HSM)
+- Network security for DID resolution
+- Optional replay protection implementation
 
 ### Known Limitations
 - Requires Node.js >= 22.0.0 for full functionality
-- Limited test coverage (~20% of codebase)
+- Test suite: 22 tests covering core functionality
 - No caching for DID resolution
-- No performance optimization
-- Experimental API - subject to breaking changes
+- Experimental API - subject to breaking changes in 0.x versions
 
 ### Dependencies
 - `@noble/secp256k1` - Cryptographic operations

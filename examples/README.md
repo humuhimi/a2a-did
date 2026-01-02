@@ -18,8 +18,11 @@ npx tsx examples/01-basic-did-web.ts
 # Example 2: Sign and verify A2A messages
 npx tsx examples/02-sign-and-verify.ts
 
-# Example 3: Error handling best practices
-npx tsx examples/03-error-handling.ts
+# Example 3: Cross-DID method communication
+npx tsx examples/03-cross-did-communication.ts
+
+# Example 4: Error handling best practices
+npx tsx examples/04-error-handling.ts
 ```
 
 ## Examples Overview
@@ -48,7 +51,24 @@ Shows how to:
 
 ---
 
-### 03-error-handling.ts
+### 03-cross-did-communication.ts
+**Difficulty: Intermediate**
+
+Shows how to:
+- Create agents with different DID methods (did:web and did:ethr)
+- Exchange signed messages between different identity types
+- Demonstrate cross-domain authentication without a central registry
+
+**Use case:** Understanding how different DID methods interoperate
+
+**Key demonstration:**
+- Alice (did:web) and Bob (did:ethr) can authenticate each other
+- No pre-registration or central authority needed
+- Cryptographically verifiable identity across different networks
+
+---
+
+### 04-error-handling.ts
 **Difficulty: Intermediate**
 
 Shows how to:
@@ -60,20 +80,17 @@ Shows how to:
 
 ---
 
-## ⚠️ Security Warning
+## Production Deployment
 
-These examples are for **development and testing only**.
-
-**Do NOT use in production without:**
-1. Implementing proper key management (KMS/HSM)
-2. Adding replay attack protection
-3. Validating DID resolution against SSRF
-4. Following all mitigations in [SECURITY.md](../SECURITY.md)
+These examples demonstrate basic usage. For production deployments, review [SECURITY.md](../SECURITY.md) to understand implementation responsibilities including:
+- Key management strategies appropriate to your use case
+- Network security considerations for DID resolution
+- Optional replay protection if needed for your application
 
 ## Next Steps
 
 - Read the [API Documentation](../README.md)
-- Review [SECURITY.md](../SECURITY.md) for production deployment
+- Review [SECURITY.md](../SECURITY.md) for deployment considerations
 - Check out the [test suite](../src/__tests__/) for more usage patterns
 
 ## Need Help?

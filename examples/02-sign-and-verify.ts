@@ -58,7 +58,7 @@ async function main() {
 
   console.log('\n✓ Complete! Message can now be verified by recipient.');
   console.log('\nNote: Verification requires DID resolution (did:web over HTTPS).');
-  console.log('See SECURITY.md for production deployment requirements.');
+  console.log('See SECURITY.md for production deployment considerations.');
 }
 
 main().catch(console.error);

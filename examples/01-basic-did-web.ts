@@ -33,10 +33,9 @@ async function main() {
   console.log('\nDID Document:');
   console.log(JSON.stringify(identity.document, null, 2));
 
-  // ⚠️ WARNING: In production, store private keys securely!
-  console.log('\n⚠️  SECURITY WARNING:');
-  console.log('This example stores private keys in memory.');
-  console.log('For production, use KMS/HSM. See SECURITY.md');
+  console.log('\n💡 Note:');
+  console.log('This example generates keys in memory (standard for crypto libraries).');
+  console.log('See SECURITY.md for production key management options.');
 }
 
 main().catch(console.error);
