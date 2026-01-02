@@ -7,6 +7,7 @@ import { JsonRpcProvider, Wallet } from 'ethers';
 import * as u8a from 'uint8arrays';
 import type { DIDMethodHandler } from '../service.js';
 import type { DIDIdentity, ServiceEndpoint } from '../types.js';
+import type { DIDConfig } from '../config-types.js';
 import { KNOWN_NETWORKS, type KnownNetwork } from '../resolvers/ethr.js';
 import { A2A_AGENT_CARD_SERVICE_TYPE } from '../../a2a/constants.js';
 
@@ -30,7 +31,7 @@ export class DIDEthrMethodHandler implements DIDMethodHandler {
    */
   async createIdentity(options: {
     agentId: string;
-    config: any;
+    config: DIDConfig;
     services?: ServiceEndpoint[];
   }): Promise<DIDIdentity> {
     const config = options.config;
@@ -110,7 +111,7 @@ export class DIDEthrMethodHandler implements DIDMethodHandler {
     did: string;
     privateKey: string;
     serviceEndpoint: string;
-    config: any;
+    config: DIDConfig;
   }): Promise<string[]> {
     const config = options.config;
     if (config.type !== 'ethr') {
@@ -161,18 +162,13 @@ export class DIDEthrMethodHandler implements DIDMethodHandler {
         ? options.serviceEndpoint
         : JSON.stringify(options.serviceEndpoint);
 
-    console.log(`  Registering service endpoint on-chain: ${attributeKey} -> ${endpoint}`);
-
     try {
       // setAttribute() sends a transaction to the EthereumDIDRegistry
       const tx = await ethrDid.setAttribute(attributeKey, endpoint, DEFAULT_VALIDITY);
-      console.log(`  Transaction sent: ${tx}`);
       return [tx];
     } catch (error) {
       // If no ETH for gas, provide helpful message
       if (error instanceof Error && error.message.includes('insufficient funds')) {
-        console.error(`  Error: Insufficient funds for gas. Get test ETH from Sepolia faucet.`);
-        console.error(`  Wallet address: ${ethrDid.address}`);
         throw new Error(
           `Insufficient funds for on-chain registration. ` +
             `Get Sepolia ETH from faucet for address: ${ethrDid.address}`

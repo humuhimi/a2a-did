@@ -3,6 +3,7 @@
  * Orchestrates DID operations for AI Agents through pluggable method handlers
  */
 import type { DIDIdentity, ServiceEndpoint } from './types.js';
+import type { DIDConfig } from './config-types.js';
 
 /**
  * DID Method Handler Interface
@@ -14,7 +15,7 @@ export interface DIDMethodHandler {
    */
   createIdentity(options: {
     agentId: string;
-    config: any;
+    config: DIDConfig;
     services?: ServiceEndpoint[];
   }): Promise<DIDIdentity>;
 
@@ -26,7 +27,7 @@ export interface DIDMethodHandler {
     did: string;
     privateKey: string;
     serviceEndpoint: string;
-    config: any;
+    config: DIDConfig;
   }): Promise<string[]>;
 
   /**
@@ -74,7 +75,7 @@ export class AgentDIDService {
   async createIdentity(options: {
     method: string;
     agentId: string;
-    config: any;
+    config: DIDConfig;
     services?: ServiceEndpoint[];
   }): Promise<DIDIdentity> {
     const handler = this.methods.get(options.method.toLowerCase());
@@ -94,7 +95,7 @@ export class AgentDIDService {
     did: string;
     privateKey: string;
     serviceEndpoint: string;
-    config: any;
+    config: DIDConfig;
   }): Promise<string[]> {
     const handler = this.methods.get(options.method.toLowerCase());
     if (!handler) {

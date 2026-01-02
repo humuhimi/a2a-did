@@ -6,6 +6,7 @@
 
 // DID module
 export * from './did/types.js';
+export * from './did/config-types.js';
 export * from './did/resolver.js';
 export * from './did/factory.js';
 export * from './did/service.js';

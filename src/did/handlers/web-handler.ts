@@ -7,6 +7,7 @@ import { getPublicKey } from '@noble/secp256k1';
 import * as u8a from 'uint8arrays';
 import type { DIDMethodHandler } from '../service.js';
 import type { DIDIdentity, ServiceEndpoint, DIDDocument, JsonWebKey } from '../types.js';
+import type { DIDConfig } from '../config-types.js';
 
 /**
  * Generate cryptographically secure random bytes
@@ -71,7 +72,7 @@ export class DIDWebMethodHandler implements DIDMethodHandler {
    */
   async createIdentity(options: {
     agentId: string;
-    config: any;
+    config: DIDConfig;
     services?: ServiceEndpoint[];
   }): Promise<DIDIdentity> {
     const config = options.config;
@@ -125,7 +126,7 @@ export class DIDWebMethodHandler implements DIDMethodHandler {
     did: string;
     privateKey: string;
     serviceEndpoint: string;
-    config: any;
+    config: DIDConfig;
   }): Promise<string[]> {
     // did:web does not require on-chain service registration
     // Services are declared in the DID Document served at .well-known/did.json

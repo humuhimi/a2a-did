@@ -1,0 +1,35 @@
+# Source files
+src/
+tsconfig.json
+*.tsbuildinfo
+.tsbuildinfo
+
+# Development
+.github/
+.git/
+.vscode/
+.idea/
+.DS_Store
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
+coverage/
+.nyc_output/
+vitest.config.ts
+
+# Documentation (keep README.md and LICENSE)
+docs/
+articles/
+*.md
+!README.md
+!LICENSE.md
+
+# Build
+node_modules/
+pnpm-lock.yaml
+
+# Misc
+.eslintrc*
+.prettierrc*
+.editorconfig
