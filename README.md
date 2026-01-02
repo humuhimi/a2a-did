@@ -5,23 +5,16 @@
 [![npm version](https://img.shields.io/npm/v/a2a-did.svg)](https://www.npmjs.com/package/a2a-did)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## ⚠️ Security Warning
+## Implementation Notes
 
-**🚨 NOT PRODUCTION READY - Experimental Release v0.1.0**
+**This is an experimental v0.1.0 release** focused on basic functionality.
 
-This library has **known critical security vulnerabilities** and should **NOT be used in production** without implementing proper mitigations:
+For production use, consider implementing additional security measures appropriate to your use case:
+- **Key Management**: This library generates keys in memory. Consider integrating with KMS/HSM based on your security requirements.
+- **DID Resolution**: Implement domain allowlisting if your deployment requires SSRF protection.
+- **Message Replay**: Add timestamps/nonces to messages in your application logic.
 
-- **CRITICAL**: Private keys stored unencrypted in memory (CVSS 9.1)
-- **HIGH**: SSRF vulnerability in DID resolution (CVSS 8.6)
-- **HIGH**: No replay attack protection (CVSS 7.4)
-
-**For production use, you MUST**:
-1. Integrate with KMS/HSM for key management
-2. Implement domain allowlisting for DID resolution
-3. Add replay protection with timestamps and nonces
-4. Review all security mitigations in [SECURITY.md](./SECURITY.md)
-
-See **[SECURITY.md](./SECURITY.md)** for complete vulnerability details and mitigation strategies.
+See [SECURITY.md](./SECURITY.md) for detailed security considerations.
 
 ---
 
