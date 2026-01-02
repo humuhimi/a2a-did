@@ -1,0 +1,135 @@
+/**
+ * Message Verification Tests
+ * Tests for A2A message signature verification
+ * SKIPPED: Requires Node 22+ for node-datachannel native modules
+ */
+import { describe, it, expect } from 'vitest';
+import { createAgentDIDService } from '../did/factory.js';
+import { signA2AMessage } from '../a2a/signing.js';
+import { verifyA2AMessageSignature } from '../a2a/verification.js';
+
+describe.skip('A2A Message Verification', () => {
+  it('should verify valid signature', async () => {
+    const service = await createAgentDIDService(['web']);
+    const identity = await service.createIdentity({
+      method: 'web',
+      agentId: 'test-agent',
+      config: {
+        type: 'web',
+        domain: 'example.com',
+        port: 443,
+      },
+    });
+
+    const message = {
+      jsonrpc: '2.0',
+      method: 'test/message',
+      params: { data: 'test' },
+    };
+
+    const signed = await signA2AMessage(message, identity);
+
+    const result = await verifyA2AMessageSignature(
+      signed,
+      identity.document! // Use the document directly for testing
+    );
+
+    expect(result.valid).toBe(true);
+    expect(result.senderDid).toBe(identity.did);
+  });
+
+  it('should reject tampered message', async () => {
+    const service = await createAgentDIDService(['web']);
+    const identity = await service.createIdentity({
+      method: 'web',
+      agentId: 'test-agent',
+      config: {
+        type: 'web',
+        domain: 'example.com',
+        port: 443,
+      },
+    });
+
+    const message = { jsonrpc: '2.0', method: 'test/message' };
+    const signed = await signA2AMessage(message, identity);
+
+    // Tamper with the message
+    const tampered = {
+      ...signed,
+      jsonrpc: '2.0',
+      method: 'TAMPERED',
+    };
+
+    const result = await verifyA2AMessageSignature(tampered, identity.document!);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('should reject message with invalid signature format', async () => {
+    const invalidMessage = {
+      jsonrpc: '2.0',
+      method: 'test',
+      signatures: [
+        {
+          protected: 'invalid-base64',
+          signature: 'invalid-signature',
+        },
+      ],
+    };
+
+    const mockDocument = {
+      id: 'did:web:example.com',
+      verificationMethod: [],
+    };
+
+    const result = await verifyA2AMessageSignature(invalidMessage as any, mockDocument as any);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('should reject message without signatures', async () => {
+    const messageWithoutSig = {
+      jsonrpc: '2.0',
+      method: 'test',
+    };
+
+    const mockDocument = {
+      id: 'did:web:example.com',
+      verificationMethod: [],
+    };
+
+    const result = await verifyA2AMessageSignature(messageWithoutSig as any, mockDocument as any);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toMatch(/signature|missing/i);
+  });
+
+  it('should handle verification with missing public key', async () => {
+    const service = await createAgentDIDService(['web']);
+    const identity = await service.createIdentity({
+      method: 'web',
+      agentId: 'test-agent',
+      config: {
+        type: 'web',
+        domain: 'example.com',
+        port: 443,
+      },
+    });
+
+    const message = { jsonrpc: '2.0', method: 'test' };
+    const signed = await signA2AMessage(message, identity);
+
+    // Use empty document without verification methods
+    const emptyDocument = {
+      id: identity.did,
+      verificationMethod: [],
+    };
+
+    const result = await verifyA2AMessageSignature(signed, emptyDocument as any);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+});
