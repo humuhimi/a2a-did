@@ -1,13 +1,40 @@
 {
   "name": "a2a-did",
   "version": "0.1.0",
-  "description": "Core DID and Agent functionality",
+  "description": "DID-based authentication for A2A Protocol - Sign and verify agent messages with did:web and did:ethr",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "license": "MIT",
+  "author": "humuhimi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/humuhimi/a2a-did.git"
+  },
+  "homepage": "https://github.com/humuhimi/a2a-did#readme",
+  "bugs": {
+    "url": "https://github.com/humuhimi/a2a-did/issues"
+  },
+  "keywords": [
+    "a2a",
+    "did",
+    "agent",
+    "authentication",
+    "decentralized-identity",
+    "did-web",
+    "did-ethr",
+    "jws",
+    "ai-agent"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@helia/verified-fetch": "^5.1.1",
