@@ -19,7 +19,7 @@
   "author": "humuhimi",
   "repository": {
     "type": "git",
-    "url": "https://github.com/humuhimi/a2a-did.git"
+    "url": "git+https://github.com/humuhimi/a2a-did.git"
   },
   "homepage": "https://github.com/humuhimi/a2a-did#readme",
   "bugs": {
