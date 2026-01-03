@@ -14,6 +14,8 @@ tsconfig.json
 # Tests
 **/*.test.ts
 **/*.spec.ts
+**/__tests__
+dist/__tests__
 coverage/
 .nyc_output/
 vitest.config.ts
@@ -21,6 +23,7 @@ vitest.config.ts
 # Documentation (keep README.md and LICENSE)
 docs/
 articles/
+examples/
 *.md
 !README.md
 !LICENSE.md

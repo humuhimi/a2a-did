@@ -47,7 +47,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm test && npm run build && rm -rf dist/__tests__"
   },
   "dependencies": {
     "@helia/verified-fetch": "^5.1.1",
