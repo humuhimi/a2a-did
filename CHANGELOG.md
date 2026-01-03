@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-01-03
+
+### Added
+- JWS format validation in `verifySignedA2ARequest()` to prevent malformed signatures
+- Documentation emphasizing A2A SDK compatibility (`express.json()` middleware)
+
+### Improved
+- Input validation for signature verification (validates 3-part JWS format)
+- README clarity on implementation approach and A2A SDK compatibility
+
+### Notes
+This is a patch release with security improvements. No breaking changes. Maintains full compatibility with `@a2a-js/sdk` official middleware using JSON-RPC extension field approach.
+
 ## [0.1.0] - 2026-01-03
 
 ### Added
@@ -43,5 +56,6 @@ See [SECURITY.md](./SECURITY.md) for production deployment considerations includ
 - `ethr-did` - Ethereum DID method
 - `@helia/verified-fetch` - IPFS content verification
 
-[Unreleased]: https://github.com/humuhimi/a2a-did/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/humuhimi/a2a-did/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/humuhimi/a2a-did/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/humuhimi/a2a-did/releases/tag/v0.1.0

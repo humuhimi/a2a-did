@@ -195,15 +195,23 @@ export async function verifySignedA2ARequest(
   }
 
   try {
-    // 1. Verify the JWS signature
+    // 1. Validate JWS Compact Format (RFC 7515: header.payload.signature)
+    const parts = request.signature.split('.');
+    if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
+      return {
+        valid: false,
+        error: 'Invalid JWS format: expected 3 non-empty parts (header.payload.signature)'
+      };
+    }
+
+    // 2. Verify the JWS signature
     const signatureResult = await verifyA2AMessageSignature(request.signature);
     if (!signatureResult.valid) {
       return signatureResult;
     }
 
-    // 2. Verify payload integrity (JWS payload matches request body)
-    const parts = request.signature.split('.');
-    const payload = decodeBase64UrlJson(parts[1]!);
+    // 3. Verify payload integrity (JWS payload matches request body)
+    const payload = decodeBase64UrlJson(parts[1]);
     const { signature: _sig, ...requestWithoutSig } = request;
 
     if (!jsonEquals(payload, requestWithoutSig)) {
