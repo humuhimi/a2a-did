@@ -78,7 +78,7 @@ export class DIDEthrMethodHandler implements DIDMethodHandler {
 
     // DID format: did:ethr:sepolia:0x...
     const did = `did:ethr:${networkName}:${wallet.address}`;
-    const keyId = `${did}#controller`;
+    const keyId = `${did}#key-1`;
 
     // EthrDID always has a signer when created with privateKey
     if (!ethrDid.signer) {
@@ -193,12 +193,12 @@ export class DIDEthrMethodHandler implements DIDMethodHandler {
   /**
    * Get key ID for did:ethr
    * @param did - DID string
-   * @returns Key identifier with #controller fragment
+   * @returns Key identifier with #key-1 fragment
    * @example
-   * getKeyId("did:ethr:sepolia:0x1234...") // returns "did:ethr:sepolia:0x1234...#controller"
+   * getKeyId("did:ethr:sepolia:0x1234...") // returns "did:ethr:sepolia:0x1234...#key-1"
    */
   getKeyId(did: string): string {
-    return `${did}#controller`;
+    return `${did}#key-1`;
   }
 
   /**

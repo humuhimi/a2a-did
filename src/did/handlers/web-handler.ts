@@ -89,8 +89,11 @@ export class DIDWebMethodHandler implements DIDMethodHandler {
     const publicKey = getPublicKey(privateKey, false); // uncompressed
 
     // Build DID string
-    // Encode special characters (: → %3A for port numbers)
-    const encodedDomain = `${config.domain}:${config.port}`.replace(/:/g, '%3A');
+    // Omit port 443 (HTTPS default) per did:web best practices
+    // Encode special characters (: → %3A for non-standard port numbers)
+    const port = config.port ?? 443;
+    const portSuffix = port === 443 ? '' : `:${port}`;
+    const encodedDomain = `${config.domain}${portSuffix}`.replace(/:/g, '%3A');
     const path = `agents/${options.agentId}`;
     const did = `did:web:${encodedDomain}:${path.split('/').join(':')}`;
 

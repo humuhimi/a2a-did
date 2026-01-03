@@ -11,8 +11,8 @@ export interface WebDIDConfig {
   type: 'web';
   /** Domain name (e.g., "example.com") */
   domain: string;
-  /** Port number (e.g., 3000) */
-  port: number;
+  /** Port number (defaults to 443 for HTTPS) */
+  port?: number;
   /** Optional controller DID */
   controller?: string;
 }
