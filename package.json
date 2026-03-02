@@ -50,7 +50,7 @@
     "prepublishOnly": "npm test && npm run build && rm -rf dist/__tests__"
   },
   "dependencies": {
-    "@helia/verified-fetch": "^6.0.0",
+    "@helia/verified-fetch": "^7.0.3",
     "@noble/secp256k1": "^3.0.0",
     "did-jwt": "^8.0.18",
     "did-resolver": "^4.1.0",
